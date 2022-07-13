@@ -1,0 +1,12 @@
+<launch>
+	<include file="$(find stella_md)/launch/stella_mwdriver.launch">
+	</include>
+	<include file="$(find stella_ahrs)/launch/stella_imu.launch">
+	</include>
+	<include file="$(find ydlidar)/launch/stella_lds.launch">
+	</include>
+	<include file="$(find stella_wlkata)/launch/stella_wlkata.launch">
+	</include>
+    <include file="$(find stella_camera)/launch/stella_camera.launch">
+	</include>
+</launch>
