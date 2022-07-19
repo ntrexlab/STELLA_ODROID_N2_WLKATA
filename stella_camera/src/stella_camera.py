@@ -16,6 +16,7 @@ if __name__=="__main__":
     rospy.init_node('stella_camera_node')
     bridge = CvBridge()
     pub = rospy.Publisher('camera', Image, queue_size=1)
+    pub_wlkata = rospy.Publisher('camera_for_wlkata',Image,queue_size=1)
     pub_info = rospy.Publisher('camera/info',CameraInfo, queue_size=1)
     rate = rospy.Rate(10)
 
@@ -27,6 +28,8 @@ if __name__=="__main__":
                 break
             image_msg = bridge.cv2_to_imgmsg(frame,"bgr8")
             pub.publish(image_msg)
+            frame = cv2.circle(frame,(320,675),350,(255,0,0),3)
+            image_msg = bridge.cv2_to_imgmsg(frame,"bgr8")
             camera_info.width = 640
             camera_info.height = 480
             camera_info.distortion_model = 'plumb_bob'
