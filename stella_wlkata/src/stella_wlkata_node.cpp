@@ -58,7 +58,7 @@ void block_pose_write_callback(const geometry_msgs::Pose msg)
 		char poseZ[10];
 
 		float x,y,z;
-		x = msg.position.x * 1000 + 40;
+		x = msg.position.x * 1000;
 		y = msg.position.y * 1000;
 		z = 50;
 
