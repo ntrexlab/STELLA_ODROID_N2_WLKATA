@@ -180,6 +180,29 @@ void gripper_write_callback(const  std_msgs::Bool msg)
 	ros::Duration(0.1).sleep();
 }
 
+void homing_write_callback(const std_msgs::Bool msg)
+{
+	std::string Gcode = "";
+
+        if(msg.data==true)
+	{
+		Gcode = (std::string)"$h" + "\r\n";
+
+		_serial.write(Gcode.c_str());
+		while (ros::ok())
+		{
+			Gcode = (std::string)"?" + "\r\n";
+			_serial.write(Gcode.c_str());
+			ros::Duration(0.1).sleep();
+			std_msgs::String result;
+			result.data = _serial.read(_serial.available());
+			HomingComplete = (result.data.npos == result.data.find("ok"))?false:true;
+			if(HomingComplete == true)break;
+		}
+		ros::Duration(1).sleep();
+	}
+}
+
 void grab_write_callback(const std_msgs::Bool msg)
 {
 	std::string Gcode = "";
@@ -227,6 +250,20 @@ void grab_write_callback(const std_msgs::Bool msg)
                 }
                 ros::Duration(1).sleep();
 
+		Gcode = (std::string)"M21 G90 G01 X0.00 Y38.90 Z21.30 A0.00 B-60.30 C0.00 F2000.00" + "\r\n";
+                _serial.write(Gcode.c_str());
+                while (ros::ok())
+                {
+                        Gcode = (std::string)"?" + "\r\n";
+                        _serial.write(Gcode.c_str());
+                        ros::Duration(0.1).sleep();
+                        std_msgs::String result;
+                        result.data = _serial.read(_serial.available());
+                        ArmMoveComplete = (result.data.npos == result.data.find("Idle"))?false:true;
+                        if(ArmMoveComplete == true)break;
+                }
+                ros::Duration(1).sleep();
+
 		Gcode = (std::string)"M21 G90 G01 X90.00 Y-40.00 Z40.00 A0.00 B0.00 C0.00 F2000.00" + "\r\n";
                 _serial.write(Gcode.c_str());
                 while (ros::ok())
@@ -238,6 +275,18 @@ void grab_write_callback(const std_msgs::Bool msg)
                         result.data = _serial.read(_serial.available());
                         ArmMoveComplete = (result.data.npos == result.data.find("Idle"))?false:true;
                         if(ArmMoveComplete == true)break;
+                }
+                ros::Duration(1).sleep();
+
+		Gcode = (std::string)"M3S60" + "\r\n";
+                _serial.write(Gcode.c_str());
+                while (ros::ok())
+                {
+                        ros::Duration(0.1).sleep();
+                        std_msgs::String result;
+                        result.data = _serial.read(_serial.available());
+                        GripperComplete = (result.data.npos == result.data.find("ok"))?false:true;
+                        if(GripperComplete == true)break;
                 }
                 ros::Duration(1).sleep();
 	}
@@ -252,6 +301,7 @@ int main(int argc, char** argv)
 	ros::Subscriber sub_block_pose = nh.subscribe("/block_pose", 1, block_pose_write_callback);
 	ros::Subscriber sub_gripper = nh.subscribe("/gripper", 1, gripper_write_callback);
 	ros::Subscriber sub_grab = nh.subscribe("/grab",1,grab_write_callback);
+	ros::Subscriber sub_homing = nh.subscribe("/homing",1,homing_write_callback);
 	ros::Publisher joint_pub = nh.advertise<sensor_msgs::JointState>("joint_states", 10);
 	ros::Rate loop_rate(10);
 
