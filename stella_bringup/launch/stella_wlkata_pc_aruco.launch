@@ -9,8 +9,6 @@
 	</include>
 	<include file="$(find aruco_block_pose_publisher)/launch/aruco_block_pose_publish.launch">
 	</include>
-	<include file="$(find grab_publisher)/launch/grab_publish.launch">
-	</include>
 
 	<!-- Map server -->
 	<node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
@@ -25,7 +23,7 @@
 	<!-- rviz -->
 	<group if="$(arg open_rviz)"> 
 	<node pkg="rviz" type="rviz" name="rviz" required="true"
-	      args="-d $(find stella_bringup)/rviz/stella_wlkata.rviz"/>
+	      args="-d $(find stella_bringup)/rviz/stella_wlkata_aruco.rviz"/>
 	</group>	
 </launch>
 
