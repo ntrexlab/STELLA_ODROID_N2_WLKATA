@@ -21,7 +21,7 @@ void ntrex_can_fifo::MD_input(char *str)
 {
     if (!strcmp(str, "move"))
     {
-        sprintf(write_buf, "mvc=%0.3f,%0.3f\r\n", left_rpm, rigth_rpm); //
+        sprintf(write_buf, "mvc=%0.3f,%0.3f\r\n", right_rpm, left_rpm); //
 
         for (int i = 0; i < strlen(write_buf); i++)
         {
@@ -44,7 +44,7 @@ void ntrex_can_fifo::MD_input(char *str)
 
 void ntrex_can_fifo::chatterCallback(const geometry_msgs::Twist::ConstPtr &msg)
 {
-    calculate_wheel_vel(msg->linear.x, msg->angular.z, &left_rpm, &rigth_rpm);
+    calculate_wheel_vel(msg->linear.x, msg->angular.z, &left_rpm, &right_rpm);
 
     linear_x = msg->linear.x;
     angular_ = msg->angular.z;
@@ -64,18 +64,14 @@ void ntrex_can_fifo::readStatus()
 
         int i = 0;
         char parsing[3][20];
-        double dt = (current_time - last_time).toSec();
 
         int nbytes = read(serial_port, &read_buf, sizeof(read_buf));
 
-        if (dt > 10)
-        {
-            dt = 0.2;
-        }
-
         if (nbytes > 0)
         {
-            char *ptr = strtok(read_buf + 4, ",");
+            memcpy(buff,&read_buf[0],3);
+
+            char *ptr = strtok(read_buf + 3, ",");
 
             i = 0;
 
@@ -85,24 +81,29 @@ void ntrex_can_fifo::readStatus()
                 ptr = strtok(NULL, ",");
             }
 
-            left_encoder = atoi(parsing[0]);
-            right_encoder = atoi(parsing[1]);
+            if(strcmp(buff,"mp=") == 0)
+            {
+              left_encoder = atoi(parsing[1]);
+              right_encoder = atoi(parsing[0]);
+            }
 
             delta_left = (left_encoder - left_encoder_prev) * -1;
-            delta_right = right_encoder - right_encoder_prev;
+            delta_right = (right_encoder - right_encoder_prev) * -1;
 
             if (abs(delta_left) < 12000 && abs(delta_right) < 12000)
             {
                 delta_s = (delta_left + delta_right) / 2.0 / pulse_per_distance;
                 delta_th = ((delta_right - delta_left) / wheel_to_wheel_d / pulse_per_distance);
-                delta_x = (delta_s * cos(th + delta_th / 2.0));
-                delta_y = (delta_s * sin(th + delta_th / 2.0));
+                delta_x = (delta_s * cos(th + delta_th));
+                delta_y = (delta_s * sin(th + delta_th));
+
             }
 
-            x -= delta_x;
-            y -= delta_y;
+            x += delta_x;
+            y += delta_y;
             th += delta_th;
         }
+
         geometry_msgs::Quaternion Quaternion = tf::createQuaternionMsgFromYaw(th);
    
         transform.setOrigin( tf::Vector3(x, y,0));
@@ -195,4 +196,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-
